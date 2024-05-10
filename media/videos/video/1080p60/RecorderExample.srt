@@ -1,0 +1,72 @@
+1
+00:00:00,000 --> 00:00:04,676
+This is a 101 on Quantum Error Correcting Autoencoders.
+
+2
+00:00:05,776 --> 00:00:11,186
+First let's review the concepts of a classical autoencoder to understand the
+
+3
+00:00:11,286 --> 00:00:16,406
+motivation for turning it quantum. The autoencoder is a subclass of deep
+
+4
+00:00:16,506 --> 00:00:21,336
+neural networks in which the network is trained to output its input.
+
+5
+00:00:21,436 --> 00:00:26,557
+Autoencoders tend to have a small hidden layer, called the latent space,
+
+6
+00:00:26,657 --> 00:00:31,632
+which allows for a compact representation of the input. This means you
+
+7
+00:00:31,732 --> 00:00:36,490
+can seperate the encoder and decoder, leaving the latent space as a
+
+8
+00:00:36,590 --> 00:00:42,870
+compressed representation of the original content. Further, autoencoders can be used for
+
+9
+00:00:42,970 --> 00:00:48,888
+simultaneous denoising and compression, by training the model to return good images
+
+10
+00:00:48,988 --> 00:00:50,556
+even with noisy inputs.
+
+11
+00:00:50,652 --> 00:00:55,818
+In quantum computing, two major challanges are compression of data are
+
+12
+00:00:55,918 --> 00:01:01,685
+efficently storing data in fewer qbits, and error correcting. Autoencoders can
+
+13
+00:01:01,785 --> 00:01:06,424
+solve both at once, and therefore are a very natural archecture
+
+14
+00:01:06,524 --> 00:01:10,561
+to adapt. I will be brief with many explenations in the
+
+15
+00:01:10,661 --> 00:01:15,376
+adaptation of classical to quantum autoencoder, so I will try to
+
+16
+00:01:15,476 --> 00:01:20,791
+leave references down on the bottom right for fruther exploration. There
+
+17
+00:01:20,891 --> 00:01:25,831
+are three key steps for training a usuable autoencoder. The forward
+
+18
+00:01:25,931 --> 00:01:29,216
+pass. The backpropagation. And the optimizer.
+
