@@ -39,34 +39,282 @@ simultaneous denoising and compression, by training the model to return good ima
 even with noisy inputs.
 
 11
-00:00:50,652 --> 00:00:55,818
-In quantum computing, two major challanges are compression of data are
+00:00:50,656 --> 00:00:56,649
+In quantum computing, two major challenges are compression of data are efficiently
 
 12
-00:00:55,918 --> 00:01:01,685
-efficently storing data in fewer qbits, and error correcting. Autoencoders can
+00:00:56,749 --> 00:01:02,520
+storing data in fewer qubits, and error correcting. Autoencoders can solve both
 
 13
-00:01:01,785 --> 00:01:06,424
-solve both at once, and therefore are a very natural archecture
+00:01:02,620 --> 00:01:07,424
+at once, and therefore are a very natural architecture to adapt. I
 
 14
-00:01:06,524 --> 00:01:10,561
-to adapt. I will be brief with many explenations in the
+00:01:07,524 --> 00:01:12,626
+will be brief with many explanations in the adaptation of classical to
 
 15
-00:01:10,661 --> 00:01:15,376
-adaptation of classical to quantum autoencoder, so I will try to
+00:01:12,726 --> 00:01:17,531
+quantum autoencoder, so I will try to leave references down on the
 
 16
-00:01:15,476 --> 00:01:20,791
-leave references down on the bottom right for fruther exploration. There
+00:01:17,631 --> 00:01:23,178
+bottom right for further exploration. There are three key steps for training
 
 17
-00:01:20,891 --> 00:01:25,831
-are three key steps for training a usuable autoencoder. The forward
+00:01:23,278 --> 00:01:29,272
+a usable autoencoder. The forward pass. The backpropagation. And the optimizer. We
 
 18
-00:01:25,931 --> 00:01:29,216
-pass. The backpropagation. And the optimizer.
+00:01:29,372 --> 00:01:34,028
+already run into an issue trying to make a quantum forward pass:
+
+19
+00:01:34,128 --> 00:01:38,784
+Neural networks rely on data cloning for the weights part of the
+
+20
+00:01:38,884 --> 00:01:44,209
+forward pass. We want to recreate the style of linear transformation that
+
+21
+00:01:44,309 --> 00:01:50,079
+weights and biases provide, which can be achieved using a parameterized n-qubit
+
+22
+00:01:50,179 --> 00:01:55,430
+unitary gate. In this example, we will focus on the computational basis,
+
+23
+00:01:55,530 --> 00:02:00,855
+so we can reduce the number of parameters by parameterizing with rotation
+
+24
+00:02:00,955 --> 00:02:05,313
+gates. To decrease the size of our latent space, we can chop
+
+25
+00:02:05,413 --> 00:02:09,623
+off qbits. Now we have a working forward pass, we need our
+
+26
+00:02:09,723 --> 00:02:14,900
+backwards pass (finding the derivative of the weights with respect to a
+
+27
+00:02:15,000 --> 00:02:20,399
+cost function). Our cost function will be the average fidelity between the
+
+28
+00:02:20,499 --> 00:02:25,675
+input and output across the training data. However, we can leverage the
+
+29
+00:02:25,775 --> 00:02:31,545
+fact that RealAmplitudes is unitary to half the number of nessesary parameters:
+
+30
+00:02:31,645 --> 00:02:35,856
+we can use the inverse of the encoder block as our decoder
+
+31
+00:02:35,956 --> 00:02:40,686
+block. In this senario, if the encoder block makes the bottom two
+
+32
+00:02:40,786 --> 00:02:45,070
+qbits equal to the |0>, then the decoder block will be able
+
+33
+00:02:45,170 --> 00:02:51,164
+to perfectly reconstruct the initial state. Therefore, we can greatly simplify the
+
+34
+00:02:51,264 --> 00:02:55,920
+cost function by using the SWAP test, which will measure a lower
+
+35
+00:02:56,020 --> 00:03:00,230
+value if the bottom qbits are more similar. It can also be
+
+36
+00:03:00,330 --> 00:03:05,878
+run in hardware, rather than simulation, since it works on measurment rather
+
+37
+00:03:05,978 --> 00:03:10,633
+than knowing the state. So the cost function is just getting the
+
+38
+00:03:10,733 --> 00:03:15,241
+measurment block to measure 0 on the training data as often as
+
+39
+00:03:15,341 --> 00:03:20,591
+possible. However, these quantum cost functions do not provide a way for
+
+40
+00:03:20,691 --> 00:03:26,462
+backpropigation, so we don't know the derivative of the parameters with respect
+
+41
+00:03:26,562 --> 00:03:31,664
+to the cost function. Instead, we can use a derivative free optimizer,
+
+42
+00:03:31,764 --> 00:03:32,556
+like COBYLA.
+
+43
+00:03:34,276 --> 00:03:38,313
+With our Quantum Autoencoder set up with a forward pass,
+
+44
+00:03:38,413 --> 00:03:42,819
+and optimization step, let's run it on MNIST digits! Training
+
+45
+00:03:42,919 --> 00:03:47,547
+goes incredibly smoothly on both Domain Wall and MNIST datasets.
+
+46
+00:03:47,647 --> 00:03:51,611
+So we have a simple quantum autoencoder working as well
+
+47
+00:03:51,711 --> 00:03:56,856
+as a simple classical autoencoder, and it actually provides significant
+
+48
+00:03:56,956 --> 00:04:00,845
+advantages due to the unitary encoder. So are we done?
+
+49
+00:04:00,945 --> 00:04:05,352
+NOOOOO, we still have error correcting quantum autoencoders!!
+
+50
+00:04:05,442 --> 00:04:09,826
+We need to make a couple of minor modifications to our
+
+51
+00:04:09,926 --> 00:04:15,721
+current training circut to support error correction. Since we intend to
+
+52
+00:04:15,821 --> 00:04:20,121
+change the data, we need to go back to training using
+
+53
+00:04:20,221 --> 00:04:24,854
+fidelity instead of the SWAP test. We also need to encode
+
+54
+00:04:24,954 --> 00:04:30,666
+our singular input qbit into a logical codespace, represented by |0_L⟩
+
+55
+00:04:30,766 --> 00:04:35,149
+= |000⟩ and |1_L⟩ = |111⟩. Finally, we include a block
+
+56
+00:04:35,249 --> 00:04:40,463
+that introduces errors into the training. However, as a note, if
+
+57
+00:04:40,563 --> 00:04:45,196
+we are training on real quantum hardware we don't need to
+
+58
+00:04:45,296 --> 00:04:50,925
+arifically induce errors, as the autoencoder will simply train on the
+
+59
+00:04:51,025 --> 00:04:57,899
+errors that occur the quantum hardware. This adaptibility makes quantum autoencoders
+
+60
+00:04:57,999 --> 00:05:04,292
+an incredibly powerful error correcting tool. Running with a simulated p=0.05
+
+61
+00:05:04,392 --> 00:05:09,191
+bit flip error on each qbit, we get the following optimizer
+
+62
+00:05:09,291 --> 00:05:14,505
+graph. By simply training on the |0_L⟩, |1_L⟩, and |+_L⟩ inputs,
+
+63
+00:05:14,605 --> 00:05:20,898
+the Quantum Autoencoder learns perfect single qbit bit flip error correction,
+
+64
+00:05:20,998 --> 00:05:26,294
+while still recovering the input state with when no errors occur.
+
+65
+00:05:26,392 --> 00:05:31,054
+As a recap, we created a quantum forward pass using parameterized
+
+66
+00:05:31,154 --> 00:05:35,962
+rotation gates. Then we calculated a cost function using either the
+
+67
+00:05:36,062 --> 00:05:40,724
+SWAP test or calculating the fidelity of states. Finally, we used
+
+68
+00:05:40,824 --> 00:05:46,511
+COBYLA to optimize our parameters without knowing their derivative with respect
+
+69
+00:05:46,611 --> 00:05:51,273
+to the cost function. With this quantum autoencoder, we were able
+
+70
+00:05:51,373 --> 00:05:55,888
+to input qubits encoded into a logical codespace, and train the
+
+71
+00:05:55,988 --> 00:06:00,723
+autoencoder to remove the errors and return the original state. We
+
+72
+00:06:00,823 --> 00:06:05,045
+ran this all in qiskit simulation, but if this were running
+
+73
+00:06:05,145 --> 00:06:09,148
+on a quantum computer, it could train on the real errors
+
+74
+00:06:09,248 --> 00:06:14,056
+that happen in the qbits rather than our artificially incited ones.
+
+75
+00:06:14,156 --> 00:06:19,917
+Please see "Quantum Error Correction with Quantum Autoencoders" for more details
+
+76
+00:06:20,017 --> 00:06:24,752
+on the topic, but they have determined that this 3-1-3 autoencoder
+
+77
+00:06:24,852 --> 00:06:29,953
+error correction is always more accurate than 3 qbit actively corrected
+
+78
+00:06:30,053 --> 00:06:35,081
+encoding schemes when the noise inside of the error correcting network
+
+79
+00:06:35,181 --> 00:06:39,183
+is low (this is because the increased number of gates in
+
+80
+00:06:39,283 --> 00:06:43,212
+the autoencoder makes internal noise more significant).
 
